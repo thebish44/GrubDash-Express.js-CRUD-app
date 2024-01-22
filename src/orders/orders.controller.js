@@ -24,7 +24,7 @@ function createOrder(req, res) {
     res.status(201).json({ data: newOrder });
 }
 
-function updateOrder(req, res) {
+function updateOrder(req, res, next) {
     const order = res.locals.order;
     const { orderId } = req.params;
     const { data: { id, deliverTo, mobileNumber, status, dishes } = {} } = req.body;
@@ -98,8 +98,9 @@ function dishesQtyCheck(req, res, next) {
 
 function statusChecks(req, res, next) {
     const { data: {status} } = req.body;
-    const existingOrder = req.locals.order;
-    if (!status) {
+    const existingOrder = res.locals.order;
+    const validStatuses = ['pending', 'preparing', 'out-for-delivery', 'delivered'];
+    if (!status || !validStatuses.includes(status)) {
         return next({status: 400, message: `Order must have a status of pending, preparing, out-for-delivery, delivered`});
     } 
     if (existingOrder.status === "delivered") {
@@ -109,7 +110,7 @@ function statusChecks(req, res, next) {
 }
 
 function deleteOrderChecks(req, res, next) {
-    const existingOrder = req.locals.order;
+    const existingOrder = res.locals.order;
 
     if (existingOrder.status !== "pending"){
         return next({status: 400, message: `An order cannot be deleted unless it is pending`});
